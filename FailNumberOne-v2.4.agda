@@ -2,7 +2,7 @@
 
 --open import Naturals
 --open import Bool
---open import 2DependentTypes
+--open import DependentTypes
 --open import DependentTypes2
 open import Equality
 
@@ -38,25 +38,6 @@ record iso (C : pcat) {a b : pcat.A₀ C} (f : pcat.A₁ C a b) : Set where  -- 
     ε : pcat._∘_ C f g == pcat.id C b   --right inverse witness
 
 
-{-record Σ (A : Set) (B : A → Set) : Set where
-  constructor _,_
-  field
-    fst : A
-    snd : B fst-}
-
---data _≅_ (C : pcat) (a b : pcat.A₀ C) : Set where
---  witness : Σ (pcat.A₁ C a b) (λ f → iso C f)
-
--- _≅_ : (C : pcat) (a b : pcat.A₀ C) → (w : Σ (pcat.A₁ C a b) (λ f → iso C f)) → Σ.fst w
-
---postulate
---  F : (a ≅ b) → pcat.A₁ a b →
-
---  data _==_ {X : Set} (x : X) : X → Set where
---  idp : x == x -- idp is short for "identity path". The HoTT book says refl instead.
-
-
-
 --  postulate
 --  homset-is-hset : {C :  pcat} {a b : pcat.A₀ C} → is-hset ( pcat.A₁ C a b ) -- But since all hom-sets are sets...
 --  homset-is-hset = λ x y z w → {!   !}
@@ -74,23 +55,8 @@ is-iso-is-hprop C f = λ i j → eq-inverse-implies-eq-iso C f i j (pcat.ul C (i
  ∙ (ap (λ x → pcat._∘_ C (iso.g j) x) (iso.ε i) ∙ ! (pcat.ur C (iso.g j)) ))))
 
  --Lemma 9.1.4
-id-to-iso : (C : pcat) (a b : pcat.A₀ C) (p : a == b) → (pcat.A₁ C a b)
-id-to-iso C  a .a idp = pcat.id C a
 
---definition of a category
-record cat : Set₁ where
-  field
-    precat : pcat
-    iso-to-id :  {a b : pcat.A₀ precat} → (f : pcat.A₁ precat a b) → (p : iso precat f) → (a == b)
+--id-to-iso : (C : pcat) {a b : pcat.A₀ C} (p : a == b) → (iso C p)
+--id-to-iso = ?
 
---Definition 9.8.1
---Part I
-
-record str (X : pcat) : Set₁ where
-  field
-    P : pcat.A₀ X → Set
-    H : (x y : pcat.A₀ X) → (α : P x) → (β : P y) → (f : pcat.A₁ X x y) → Set
-    H-is-hprop : (x y : pcat.A₀ X) → (α : P x) → (β : P y) → (f : pcat.A₁ X x y) → is-hprop (H x y α β f)
-    H-id : (x : pcat.A₀ X) (α : P x) → H x x α α (pcat.id X x)
-    H-comp : (x y z : pcat.A₀ X) → (α : P x) → (β : P y) → (γ : P z) →  (f : pcat.A₁ X x y) → (g : pcat.A₁ X y z) →
-      ((H x y α β f) → (H y z β γ g) → (H x z α γ (pcat._∘_ X g f)))
+--ap
