@@ -6,7 +6,7 @@
 --open import DependentTypes2
 open import Equality
 
-module FailNumberOne where
+module FailNumberOne-v2 where
 
 --_∘_ : (a b c : A₀) (A₁ b c) (A₁ a b) → (A₁ a c)
 --f ∘ g = comp f g
@@ -31,30 +31,26 @@ record pcat : Set₁ where -- definition of precategory
     ul : {a b : A₀} → (f : A₁ a b) → f == (id b ∘ f)
     α : {a b c d : A₀} → (f : A₁ a b) → (g : A₁ b c) → (h : A₁ c d) → (h ∘ (g ∘ f)) == ((h ∘ g) ∘ f) -- associativity
 
-record iso {C : pcat} {a b : pcat.A₀ C} (f : pcat.A₁ C a b) : Set where  -- isomorphism
+record iso (C : pcat) {a b : pcat.A₀ C} (f : pcat.A₁ C a b) : Set where  -- isomorphism
   field
     g : pcat.A₁ C b a   -- inverse map
     τ : pcat._∘_ C g f == pcat.id C a   --left inverse witness
     ε : pcat._∘_ C f g == pcat.id C b   --right inverse witness
 
 --postulate
-  --homset-is-hset : {C : pcat} {a b : pcat.A₀ C} → is-hset ( pcat.A₁ C a b ) -- But since all hom-sets are sets...
-
-leo : {C : pcat} {a b : pcat.A₀ C} (f : pcat.A\_1 C a b) → ( i j : iso f) → (p : iso.g i == iso.g j) → (q : i == j)
-leo = ?
-  --  homset-is-hset = λ x y z w → {!   !}
-
-is-iso-is-hprop : {C : pcat} {a b : pcat.A₀ C} (f : pcat.A₁ C a b) → is-hprop (iso f) -- Lemma 9.1.3
---is-iso-is-hprop f = λ g' g → pcat.ul {!  !} (iso.g g') ∙ ( ap (λ x → pcat._∘_ {!  !} x  g') (pcat._∘_ {!  !} (iso.τ g) f) ∙ ( pcat.ur {!   !} (iso.g g') ∙ ( ! (pcat.α {!    !} g f g') ∙ ! (pcat.ur {!   !} (iso.g g ) ) ) ) )
-is-iso-is-hprop f = λ x y → {!   !}
+--  homset-is-hset : {C : pcat} {a b : pcat.A₀ C} → is-hset ( pcat.A₁ C a b ) -- But since all hom-sets are sets...
+--  homset-is-hset = λ x y z w → {!   !}
 
 
+postulate
+  eq-inverse-implies-eq-iso : (C : pcat) {a b : pcat.A₀ C} → (f : pcat.A₁ C a b) → ( i j : iso C f ) → (p : (iso.g i) == (iso.g j)) → (i == j)
 
+-- Lemma 9.1.3
+is-iso-is-hprop : (C : pcat) {a b : pcat.A₀ C} (f : pcat.A₁ C a b) → is-hprop (iso C f)
+is-iso-is-hprop C f = λ i j → eq-inverse-implies-eq-iso C f i j (pcat.ul C (iso.g i)
+ ∙ (ap (λ x → pcat._∘_ C x (iso.g i)) (! (iso.τ j)) ∙ ( ! (pcat.α C (iso.g i) f (iso.g j))
+ ∙ (ap (λ x → pcat._∘_ C (iso.g j) x) (iso.ε i) ∙ ! (pcat.ur C (iso.g j)) ))))
 
+ --Lemma 9.1.4
 
-
-
-
-
---composition : { A₀ : Set} (C : pcat A₀) {a b c : A₀} → ((pcat.A₁ C) b c) → ((pcat.A₁ C) a b) → ((pcat.A₁ C) a c)
---composition C f g = pcat.comp C f g
+--ap
