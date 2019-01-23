@@ -1,0 +1,324 @@
+{-# OPTIONS --without-K --no-eta-equality #-}
+
+
+module 3DependentTypes2 where
+
+{- Recall from before that we can define equality (or identity, or path) types as
+   an indexed inductive definition below. To prove something about all proofs of equality
+   we only have prove it about reflexivity.
+-}
+data _==_ {X : Set} (x : X) : X → Set where
+  idp : x == x -- idp is short for "identity path". The HoTT book says refl instead.
+
+
+{- We construct a function from x == y to y == x by pattern matching.
+   Note that we have written .x for the second argument. These is referred to
+   as a "dot pattern" or "inaccessible pattern." It signifies that the second
+   argument is forced to be equal to x by the other arguments, in this case
+   because the third argument is idp, it is forced to be equal to the second
+   argument.
+ -}
+symmetric : {X : Set} (x y : X) → (x == y) → (y == x)
+symmetric x .x idp = idp
+
+{- We often use the following notation for symmetric.
+   We think of this as reversing the direction of a path.
+   Note that we have now made x and y into implicit arguments, when
+   they weren't implicit for the function symmetric. This
+   is often more useful in practice.
+-}
+! : {X : Set} {x y : X} → (x == y) → (y == x)
+! {X} {x} {y} p = symmetric x y p
+
+
+{- The induction principle for equality is the function J defined
+   below. This is called ind= in the HoTT book. -}
+J : {X : Set} (C : (x : X) → (y : X) → (p : x == y) → Set)
+    (c : (x : X) → (C x x idp)) → (x y : X) → (p : x == y) → C x y p
+J C c x .x idp = c x
+
+{- There is also a stronger version of J known as based path induction
+   (in the HoTT book) or Paulin-Mohring J rule. -}
+J' : {X : Set} (x : X) (C : (y : X) → (p : x == y) → Set)
+     (c : C x idp) → (y : X) → (p : x == y) → C y p
+J' x C c .x idp = c
+
+
+-- NB: In practice we can usually use pattern matching directly instead of J or J'
+
+
+{- Transitivity -}
+{- Exercise 1: Derive transitive from J' without using pattern matching directly.
+   Hint: Some of the values have been filled in below for one possible approach.
+         In this approach we fix x, y and p, and carry out path induction over all
+         paths q' that start at y and have some endpoint z'. We then apply this
+         with z' = z and q' = q.
+-}
+transitive : {X : Set} {x y z : X} → (x == y) → (y == z) → (x == z)
+transitive {X} {x} {y} {z} p q = J' y (λ z' q' → x == z') p z q
+
+{- Instead of using transitivity directly, we usually use the mixfix
+   notation ∙ (written \. )
+   Topologically we think of p ∙ q as concatenating two paths p and q.
+-}
+_∙_ : {X : Set} {x y z : X} → (x == y) → (y == z) → (x == z)
+p ∙ idp = p
+
+infix 50 _∙_
+
+{- Exercise 2: Show that idp can be "cancelled" -}
+∙-unit-l : {X : Set} {x y : X} (p : x == y) → idp ∙ p == p
+∙-unit-l idp = idp
+
+∙-unit-r : {X : Set} {x y : X} (p : x == y) → p ∙ idp == p
+∙-unit-r idp = idp
+
+
+
+{- Action on paths is an important function in type theory -}
+ap : {X Y : Set} (f : X → Y) {x y : X} → (x == y) → (f x == f y)
+ap f idp = idp
+
+transport : {X : Set} {Y : X → Set} {x y : X} (p : x == y) → (Y x) → (Y y)
+transport idp y = y
+
+{- Note that any type has an identity type, even identity types themselves. -}
+
+{- We show that composing a path p with its inverse is equal to idp -}
+!-inv-l : {X : Set} {x y : X} (p : x == y) → (((! p) ∙ p) == idp )
+!-inv-l idp = idp
+
+{- As a special case of !-inv-l, we can take y to be the variable x
+   giving the function below. Observe that there is
+   no obvious way to use pattern matching or J directly to prove this.
+-}
+inv1 : {X : Set} {x : X} (p : x == x) → (((! p) ∙ p) == idp)
+inv1 p = !-inv-l p
+
+
+{- Quasi inverses -}
+record qinv {X Y : Set} (f : X → Y) : Set where
+  field
+    g : Y → X
+    f-g : (y : Y) → (f (g y) == y)
+    g-f : (x : X) → (g (f x) == x)
+
+{- Exercise 3: For each p : x == y and each z, we have a map from y == z to x == z using
+   transitivity. Find a quasi inverse to this function.
+   Hint: You might find it useful to prove some more general lemmas first. -}
+
+lemma1 : {X : Set} {x y z : X} (p : x == y) → (r : x == z) → transitive p (transitive (! p) r) == r
+lemma1 idp idp = idp
+
+lemma2 : {X : Set} {x y z : X} (p : x == y) → (q : y == z) → transitive (! p)  (transitive p q) == q
+lemma2 idp idp = idp
+
+p-inv : {X : Set} (x y z : X) (p : x == y) → (qinv (transitive {X} {x} {y} {z} p))
+p-inv x y z p = record { g = transitive (! p) ; f-g = lemma1 p ; g-f = lemma2 p }
+
+{- Σ-type, or dependent sum or coproduct. This corresponds to existential 
+   quatification under propositions-as-types.
+-}
+record Σ (A : Set) (B : A → Set) : Set where
+  constructor _,_
+  field
+    fst : A
+    snd : B fst
+
+{- Last time we saw pair types/product types which are defined as follows. 
+   In the HoTT book products are written A × B
+-}
+record Pair (A B : Set) : Set where
+  constructor _,_
+  field
+    fst : A
+    snd : B
+
+{- Products can also be written using ⊓ (\sqcap) or × (\times) -}
+_⊓_ : (A B : Set) → Set
+A ⊓ B = Pair A B
+
+_×_ : (A B : Set) → Set
+A × B = Pair A B
+
+{- We will show that ⊓ can be defined using Σ as follows -}
+Pair' : (A B : Set) → Set
+Pair' A B = Σ A (λ _ → B)
+  -- the underscore _ says that the lambda term does not depend on the variable
+  -- (i.e. it is constant)
+
+{- We aim to define an equivalence between Pair A B and Pair' A B -}
+
+{- Exercise 4: Construct a function from Pair A B to Pair' A B -}
+Pair-to-Pair' : {A B : Set} → (Pair A B) → (Pair' A B)
+Pair-to-Pair' (fst , snd) = (fst , snd)
+
+{- We need to find a quasi inverse to Pair-to-Pair' -}
+
+{- Exercise 5: Construct a function from Pair' A B to Pair A B -}
+Pair'-to-Pair : {A B : Set} → (Pair' A B) → (Pair A B)
+Pair'-to-Pair (fst , snd) = (fst , snd)
+
+{- Exercise 6: Show that the two functions above are mutually inverse
+   (fill both of the two holes below).
+-}
+Pair-inverse1 : (A B : Set) (ab : Pair' A B) → (Pair-to-Pair' (Pair'-to-Pair ab) == ab)
+Pair-inverse1 A B (fst , snd) = idp
+
+Pair-inverse2 : (A B : Set) (ab : Pair A B) → (Pair'-to-Pair (Pair-to-Pair' ab) == ab)
+Pair-inverse2 A B (fst , snd) = idp
+
+{- Exercise 7: Deduce that Pair-to-Pair' has a quasi inverse. -}
+Pair-qinv : (A B : Set) → (qinv (Pair-to-Pair' {A} {B}))
+Pair-qinv A B = record { g = Pair'-to-Pair ; f-g = Pair-inverse1 A B ; g-f = Pair-inverse2 A B }
+
+
+{- We are going to carry out the encode decode method for Σ types. Throughout this
+   argument we want to fix a type A and a dependent type B over A. We will do this
+   using a module. Any definition inside the module is free to refer to the module
+   arguments A and B without listing them as arguments.
+-}
+module Σ-encode-decode {A : Set} {B : A → Set} where
+
+  {- The first step is to define a relation on Σ A B that should be equivalent
+     to the identity type. For this we will use the record type Σ-eq below.
+  -}
+  record Σ-eq (ab ab' : Σ A B) : Set where
+    constructor Σ-eq-in
+    field
+      fst-eq : Σ.fst ab == Σ.fst ab'
+      snd-eq : (transport {A} {B} fst-eq (Σ.snd ab)) == Σ.snd ab'
+        {- note that Σ.snd ab == Σ.snd ab' would not be a well defined type
+          since Σ.snd ab and Σ.snd ab' have different types -}
+
+  {- The encode function maps from the real equality type into the new relation. -}
+  encode : (ab ab' : Σ A B) → (ab == ab') → Σ-eq ab ab'
+  encode ab .ab idp = Σ-eq-in idp idp
+
+
+  {- We aim to find a quasi inverse for encode ab ab' for each ab and ab'. -}
+
+  {- The underlying function g will be the function decode below. -}
+  decode : (ab ab' : Σ A B) → (Σ-eq ab ab') → ab == ab'
+  decode (fst , snd) (.fst , .snd) (Σ-eq-in idp idp) = idp
+
+  {- We now need to check that this does give a quasi inverse. -}
+  f-g : (ab ab' : Σ A B) → (x : Σ-eq ab ab') → encode ab ab' (decode ab ab' x) == x
+  f-g (fst , snd) (.fst , .snd) (Σ-eq-in idp idp) = idp
+
+  g-f : (ab ab' : Σ A B) → (p : ab == ab') → (decode ab ab' (encode ab ab' p) == p)
+  g-f (fst , snd) (.fst , .snd) idp = idp
+
+  {- Finally we package everything together to get an element of qinv (encode ab ab')
+     for each ab and ab'.
+  -}
+  Σ-eq-qinv : (ab ab' : Σ A B) → (qinv (encode ab ab'))
+  Σ-eq-qinv ab ab' = record {g = decode ab ab' ; f-g = f-g ab ab' ; g-f = g-f ab ab'}
+
+
+  {- Exercise 8: Why weren't ab and ab' included as module arguments?
+     It seems ab and ab' appear as placeholders, i.e. they must appear on both sides of the equalities.-}
+
+
+{- Dependent products -}
+
+{- We say two functions f and g are homotopic (f ∼ g) if f a == g a for all a -}
+_∼_ : {A : Set} {B : A → Set} (f g : (a : A) → B a) → Set
+_∼_ {A} f g = (a : A) → f a == g a
+
+{- Exercise 9: find the encode function for Π-types (this is a generalisation of
+   the app= function we saw last time).
+   It is known as happly in the HoTT book - see section 2.9 for more.
+-}
+app= : {A : Set} {B : A → Set} (f g : (a : A) → B a) →
+           (f == g) → (f ∼ g)
+app= f .f idp = λ a → idp
+
+{- Exercise 10: Complete the following goal (lemma 2.4.3 from the HoTT book) -}
+
+homotopy-commutes : {A B : Set} (f g : A → B) (H : f ∼ g) (x y : A) (p : x == y) →
+        (H x ∙ (ap g p) == (ap f p) ∙ H y)
+homotopy-commutes f g H x .x idp = ! (∙-unit-l (H x)) 
+
+{- The decode map, called funext, short for function extensionality cannot be 
+   derived in type theory or in the current version of agda. Hence we have to 
+   assume it as an axiom or postulate. We use the postulate keyword to do this
+   in agda.
+-}
+postulate
+  funext-axiom : {A : Set} {B : A → Set} (f g : (a : A) → B a) → qinv (app= f g)
+
+{- In particular we have the underlying function of the inverse, which we call funext -}
+funext : {A : Set} {B : A → Set} (f g : (a : A) → B a) → (f ∼ g) → (f == g)
+funext f g = qinv.g (funext-axiom f g)
+
+
+{- Homework -}
+
+{- (a) Give a dependent version of currying by filling in all the goals 
+       inside the module below. The idea here is that we may view a function with
+       a Σ type as domain as a function with two inputs, the type of the second
+       dependent on the first.
+-}
+{- If we have several functions that all take the same arguments we can
+   gather them together as a module to save typing. This is an anonymous module
+   where we write _ for the module identifier.
+-}
+module _ (X : Set) (Y : X → Set) (Z : Set) where
+  {- If we are given a function that takes elements of a Σ type as input, we
+     can convert it into a function with two arguments the second dependent
+     on the first
+  -}
+  curry : (Σ X Y → Z) → (x : X) → (Y x) → Z
+  curry k = λ x z → k (x , z)
+
+  {- We will define a quasi inverse to curry. First define the map going in the
+     other direction.
+  -}
+  uncurry : ((x : X) → (Y x) → Z) → (Σ X Y → Z)
+  uncurry h = λ x → h (Σ.fst x) (Σ.snd x)
+
+  {- funext implies that uncurry ∘ curry is homotopic to the identity -}
+
+  unc-c : (Σ X Y → Z) → (Σ X Y → Z)
+  unc-c x = uncurry (curry x)
+
+  id-Σ : (Σ X Y → Z) → (Σ X Y → Z)
+  id-Σ x = x
+
+  coprod-eq : {A : Set} {B : A → Set} (b : Σ A B) → (Σ.fst b , Σ.snd b) == b
+  coprod-eq (fst , snd) = idp
+
+  unc-c-eq : unc-c == id-Σ
+  unc-c-eq = funext unc-c id-Σ (λ a → funext (λ x → a (Σ.fst x , Σ.snd x)) a (λ b → ap a (coprod-eq b)))
+
+  unc-c-hom : unc-c ∼ id-Σ
+  unc-c-hom = app= unc-c id-Σ unc-c-eq
+
+  {- Next show that uncurry is a left and right inverse. -}
+
+  curry-uncurry : (k : Σ X Y → Z) → (uncurry (curry k) == k)
+  curry-uncurry k = unc-c-hom k
+
+  uncurry-curry : (h : (x : X) → (Y x) → Z) → (curry (uncurry h) == h)
+  uncurry-curry h = idp
+
+  {- Finally deduce that we can construct a quasi inverse to curry. -}
+  curry-qinv : qinv curry
+  curry-qinv = record { g = uncurry ; f-g = uncurry-curry ; g-f = curry-uncurry }
+
+{- If you have time, also try part (b) below. -}
+
+{- (b) At the top of this file there is a line reading {-# OPTIONS --without-K #-}.
+   Add the option --no-eta-equality, so that the whole line reads
+   {-# OPTIONS --without-K --no-eta-equality #-}.
+
+   When you reload the file your proof may no longer type check. If it does
+   still type check then you have finished. Otherwise adjust your proof so that
+   it works again. You may use the function extensionality axiom.
+-}
+
+{- See the agda documentation on record types at 
+   https://agda.readthedocs.io/en/v2.5.4.2/language/record-types.html
+   for more about eta equality.
+-}
