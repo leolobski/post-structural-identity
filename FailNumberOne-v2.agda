@@ -144,16 +144,26 @@ record str (X : pcat) : Set₁ where -- notion of structure over a precategory X
     --leq : (x : pcat.A₀ X) → (α β : P x) → Set
     --leq x α β = H x x α β (pcat.id X x)
 
+H-lemma : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → (g : pcat.A₁ X y z) → (f == g) → str.H S y z β γ f → str.H S y z β γ g
+H-lemma X S f .f idp = λ z → z
+
 -- left unit for a structure homomorphism
 H-ul : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → str.H S y z β γ f → str.H S y z β γ (pcat._∘_ X (pcat.id X) f)
 H-ul = λ X S {y} {z} {β} {γ} f → str.H-comp S (pcat.id X) f (str.H-id S)
 
---H-ul-inv : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → str.H S y z β γ (pcat._∘_ X (pcat.id X) f) → str.H S y z β γ f
---H-ul-inv X S {y} {z} {β} {γ} f = λ x → {!   !}
+H-ul-inv : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → str.H S y z β γ (pcat._∘_ X (pcat.id X) f) → str.H S y z β γ f
+H-ul-inv X S {y} {z} {β} {γ} f w = H-lemma X S (pcat._∘_ X (pcat.id X) f) f (! (pcat.ul X f)) w
 
 -- right unit for a structure homomorphism
 H-ur : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → str.H S y z β γ f → str.H S y z β γ (pcat._∘_ X f (pcat.id X))
 H-ur = λ X S {y} {z} {β} {γ} f z₁ → str.H-comp S f (pcat.id X) z₁ (str.H-id S)
+
+H-ur' : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → (w : str.H S y z β γ f) →
+      transport (λ v → str.H S y z β γ v) (pcat.ur X f) w == str.H-comp S f (pcat.id X) w (str.H-id S)
+H-ur' X S f w = {!   !}
+
+H-ur-inv : (X : pcat) → (S : str X) {y z : pcat.A₀ X} {β : str.P S y} {γ : str.P S z} → (f : pcat.A₁ X y z) → str.H S y z β γ (pcat._∘_ X f (pcat.id X)) → str.H S y z β γ f
+H-ur-inv X S {y} {z} {β} {γ} f w = H-lemma X S (pcat._∘_ X f (pcat.id X)) f (! (pcat.ur X f)) w
 
 -- Order on the interpretation of an object
 leq : (X : pcat) → (S : str X) → (x : pcat.A₀ X) → (α β : str.P S x) → Set
@@ -174,13 +184,14 @@ pcatstr X S =
     id = (pcat.id X) , (str.H-id S) ;
     _∘_ = λ { (fst , snd) (fst₁ , snd₁) → (pcat._∘_ X fst fst₁) , str.H-comp S fst fst₁ snd snd₁} ;
     ur = λ {(f , snd) → Σ-stuff.decode (f , snd) ((pcat._∘_ X f (pcat.id X)) , str.H-comp S f (pcat.id X) snd (str.H-id S))
-      (Σ-stuff.Σ-eq-in (pcat.ur X f)  (str.H-is-hprop S (pcat._∘_ X f (pcat.id X)) {!   !} (H-ur X S f snd)))};
+      (Σ-stuff.Σ-eq-in (pcat.ur X f)  {!   !})};
     ul = {!   !} ;
     α = {!   !} }
 
 --record { A₀ = A₀ ; A₁ = A₁ ; A₁-is-hset = A₁-is-hset ; id = id ; _∘_ = _∘_ ; ur = ur ; ul = ul ; α = α }
 --record { P = P ; H = H ; H-is-hprop = H-is-hprop ; H-id = H-id ; H-comp = H-comp }
 --(H-ur X ? f snd)
+--(str.H-is-hprop S (pcat._∘_ X f (pcat.id X)) ? (H-ur X S f snd))
 
 --{ x : pcat.A₀ X } → ((pcat.id X {x}) , (str.H-id S {x}))
 
