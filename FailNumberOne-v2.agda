@@ -113,8 +113,11 @@ record iso (C : pcat) {a b : pcat.A₀ C} (f : pcat.A₁ C a b) : Set where  -- 
 --  homset-is-hset : {C :  pcat} {a b : pcat.A₀ C} → is-hset ( pcat.A₁ C a b ) -- But since all hom-sets are sets...
 --  homset-is-hset = λ x y z w → {!   !}
 
-postulate
-  eq-inverse-implies-eq-iso : (C : pcat) {a b : pcat.A₀ C} → (f : pcat.A₁ C a b) → ( i j : iso C f ) → (p : (iso.g i) == (iso.g j)) → (i == j)
+--postulate
+--  eq-inverse-implies-eq-iso : (C : pcat) {a b : pcat.A₀ C} → (f : pcat.A₁ C a b) → ( i j : iso C f ) → (p : (iso.g i) == (iso.g j)) → (i == j)
+
+eq-inverse-implies-eq-iso : (C : pcat) {a b : pcat.A₀ C} → (f : pcat.A₁ C a b) → ( i j : iso C f ) → (p : (iso.g i) == (iso.g j)) → (i == j)
+eq-inverse-implies-eq-iso C f record { g = g ; τ = τ ; ε = ε } record { g = .g ; τ = τ₁ ; ε = ε₁ } idp = ap (λ x → record{ g = g ; τ = iso.τ x ; ε = iso.ε x}) idp
 
 --eq-inverse-implies-eq-iso' : (C : pcat) {a b : pcat.A₀ C} → (f : pcat.A₁ C a b) → ( i j : iso C f ) → (p : (iso.g i) == (iso.g j)) → (i == j)
 --eq-inverse-implies-eq-iso' = {!   !}
