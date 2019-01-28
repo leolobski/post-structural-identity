@@ -1,5 +1,5 @@
 --人生の痛み
-{-# OPTIONS --without-K #-}
+--{-# OPTIONS --without-K #-}
 --{-# OPTIONS --type-in-type #-}
 
 --open import lib.Base
@@ -26,7 +26,7 @@ module _  {X Y : Set } (f : X → Y) where
       f-g : (y : Y) → (f (g y) == y)
       g-f : (x : X) → (g (f x) == x)
 
-module Σ-stuff {A : Set} {B : A → Set} where
+module Σ-stuff {A : Set} {B : A → Set} where --this is copied from a sheet we did in class
 
   {- The first step is to define a relation on Σ A B that should be equivalent
      to the identity type. For this we will use the record type Σ-eq below.
@@ -137,14 +137,14 @@ record is-hae {X Y : Set} (f : X → Y) : Set where
       g : Y → X
       f-g : (y : Y) → (f (g y) == y)
       g-f : (x : X) → (g (f x) == x)
-  --    adj : (x : X) → ap f (g-f x) == f-g (f x)
+      --adj : (x : X) → ap f (g-f x) == f-g (f x)
 
 -- Definition of a category
 record cat : Set₁ where
   field
     precat : pcat
     iso-to-id :  {a b : pcat.A₀ precat} → (f : pcat.A₁ precat a b) → (p : iso precat f) → (a == b)
-    --wit-hae : is-hae (id-to-iso precat)
+    wit-hae : {a b : pcat.A₀ precat} → is-hae (id-to-iso precat {a} {b})
     --wit-hae' : {a b : pcat.A₀ precat} → is-hae {a == b} {Σ (pcat.A₁ precat a b) (λ f → iso precat f)} (id-to-iso precat)
 
 is-cat : (X : pcat) → Set
@@ -191,7 +191,7 @@ H-ur-inv X S {y} {z} {β} {γ} f w = H-lemma X S (pcat._∘_ X f (pcat.id X)) f 
 
 -- Order on the interpretation of an object
 leq : (X : pcat) → (S : str X) → (x : pcat.A₀ X) → (α β : str.P S x) → Set
-leq X S x α β = str.H S (pcat.id X)
+leq X S x α β = str.H S {x} {x} {α} {β} (pcat.id X)
 
 -- Standard notion of structure
 record stdstr (X : pcat) : Set₁ where
@@ -199,24 +199,41 @@ record stdstr (X : pcat) : Set₁ where
     S : str X
     spleq : (x : pcat.A₀ X) → (α β : str.P S x) → (leq X S x α β ) → (leq X S x β α) → (α == β)
 
-postulate --left as an exercise to the unfortunate reader
-  leo-r : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
-    transport (λ v → str.H S v) (pcat.ur X f) snd == str.H-comp S f (pcat.id X) snd (str.H-id S)
-  leo-l : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
-    transport (λ v → str.H S v) (pcat.ul X f) snd == str.H-comp S (pcat.id X) f (str.H-id S) snd
-  leo-α : (X : pcat) → (S : str X) → {x y z w : pcat.A₀ X} (f : pcat.A₁ X x y) → (g : pcat.A₁ X y z) → (h : pcat.A₁ X z w) → (H-f : str.H S f) → (H-g : str.H S g) → (H-h : str.H S h) →
-    transport (λ v → str.H S v) (pcat.α X f g h) (str.H-comp S h (pcat._∘_ X g f) H-h (str.H-comp S g f H-g H-f)) == (str.H-comp S (pcat._∘_ X h g) f (str.H-comp S h g H-h H-g) H-f)
 
-transport-lemma : (X : pcat) → (S : stdstr X) → (a b : pcat.A₀ X) → (p : a == b) → (α : str.P (stdstr.S S) a) → (β : str.P (stdstr.S S) b) →
+leo-r : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
+  transport (λ v → str.H S v) (pcat.ur X f) snd == str.H-comp S f (pcat.id X) snd (str.H-id S)
+leo-r X S f snd = ap (λ z → str.H-comp S {!  !} (pcat.id X) {!   !} (str.H-id S)) (Σ-stuff.decode (f , snd) (f , snd) (Σ-stuff.Σ-eq-in idp idp))
+
+leo-l : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
+  transport (λ v → str.H S v) (pcat.ul X f) snd == str.H-comp S (pcat.id X) f (str.H-id S) snd
+leo-l X S f snd = ap (λ z → str.H-comp S (pcat.id X) f (str.H-id S) snd) (Σ-stuff.decode (f , snd) (f , snd) (Σ-stuff.Σ-eq-in idp idp))
+
+leo-α : (X : pcat) → (S : str X) → {x y z w : pcat.A₀ X} (f : pcat.A₁ X x y) → (g : pcat.A₁ X y z) → (h : pcat.A₁ X z w) → (H-f : str.H S f) → (H-g : str.H S g) → (H-h : str.H S h) →
+  transport (λ v → str.H S v) (pcat.α X f g h) (str.H-comp S h (pcat._∘_ X g f) H-h (str.H-comp S g f H-g H-f)) == (str.H-comp S (pcat._∘_ X h g) f (str.H-comp S h g H-h H-g) H-f)
+leo-α X S f g h H-f H-g H-h = ap (λ x → str.H-comp S (pcat._∘_ X h g) f (str.H-comp S h g H-h H-g) H-f) idp
+
+--postulate --left as an exercise to the unfortunate reader
+--  leo-r : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
+--    transport (λ v → str.H S v) (pcat.ur X f) snd == str.H-comp S f (pcat.id X) snd (str.H-id S)-
+--  leo-l : (X : pcat) → (S : str X) → {x y : pcat.A₀ X} (f : pcat.A₁ X x y) → (snd : str.H S f) →
+--    transport (λ v → str.H S v) (pcat.ul X f) snd == str.H-comp S (pcat.id X) f (str.H-id S) snd
+--  leo-α : (X : pcat) → (S : str X) → {x y z w : pcat.A₀ X} (f : pcat.A₁ X x y) → (g : pcat.A₁ X y z) → (h : pcat.A₁ X z w) → (H-f : str.H S f) → (H-g : str.H S g) → (H-h : str.H S h) →
+--    transport (λ v → str.H S v) (pcat.α X f g h) (str.H-comp S h (pcat._∘_ X g f) H-h (str.H-comp S g f H-g H-f)) == (str.H-comp S (pcat._∘_ X h g) f (str.H-comp S h g H-h H-g) H-f)
+
+--transport-lemma : (X : pcat) → (S : stdstr X) → (a b : pcat.A₀ X) → (p : a == b) → (α : str.P (stdstr.S S) a) → (β : str.P (stdstr.S S) b) →
+--  (transport (str.P (stdstr.S S)) p α) == β
+--transport-lemma X S a .a idp α β = stdstr.spleq S a α β (str.H-id (stdstr.S S)) (str.H-id (stdstr.S S))
+
+transport-lemma : (X : cat) → (S : stdstr (cat.precat X)) → (a b : pcat.A₀ (cat.precat X)) → (p : a == b) → (α : str.P (stdstr.S S) a) → (β : str.P (stdstr.S S) b) → (s : str.H (stdstr.S S) {a} {b} {α} {β} (Σ.fst (id-to-iso (cat.precat X) p))) → (t : str.H (stdstr.S S) {b} {a} {β} {α} (Σ.fst (id-to-iso (cat.precat X) (! p)))) →
   (transport (str.P (stdstr.S S)) p α) == β
-transport-lemma X S a .a idp α β = stdstr.spleq S a α β (str.H-id (stdstr.S S)) (str.H-id (stdstr.S S))
+transport-lemma X S a .a idp α β s t = stdstr.spleq S a α β s t
 
 -- Precategory of structures
 pcatstr : (X : pcat) → (S : str X) → pcat
 pcatstr X S =
   record { A₀ = Σ  (pcat.A₀ X) (str.P S) ;
     A₁ = λ {(x , α) (y , β) → Σ (pcat.A₁ X x y) λ f → str.H S f} ;
-    A₁-is-hset = {!   !}; --λ { a b x .x idp idp → idp} this doesn't work without κ !!!
+    A₁-is-hset = λ { a b x .x idp idp → idp} ; --λ { a b x .x idp idp → idp} this doesn't work without κ !!!
     id = (pcat.id X , str.H-id S) ;
     _∘_ = λ { (fst , snd) (fst₁ , snd₁) → (pcat._∘_ X fst fst₁) , str.H-comp S fst fst₁ snd snd₁} ;
     ur = λ {(f , snd) → Σ-stuff.decode (f , snd) ((pcat._∘_ X f (pcat.id X)) , str.H-comp S f (pcat.id X) snd (str.H-id S))
@@ -235,18 +252,38 @@ pcatstr X S =
         _∘_ = λ {a} {b} {c} → λ { (fst , snd) (fst₁ , snd₁) → (pcat._∘_ X {a} {b} {c} fst fst₁) , str.H-comp {a} {b} {c} S fst fst₁ snd snd₁}
        in-} }
 
-{-postulate
+{- postulate
   leo-thm : (X : cat) → (S : stdstr (cat.precat X)) → (PCS : pcatstr (cat.precat X) (stdstr.S S)) →
     {a b : pcat.A₀ PCS} → (f : pcat.A₁ a b) → (f-uck : iso PCS f) →
     (transport (λ v → str.P (stdstr.S S) v) (cat.iso-to-id X (Σ.fst f)
     (record { g = Σ.fst (iso.g f-uck) ;
     τ = ap Σ.fst (iso.τ f-uck) ;
-    ε = ap Σ.fst (iso.ε f-uck) })) (Σ.snd a)) == Σ.snd b
--}
+    ε = ap Σ.fst (iso.ε f-uck) })) (Σ.snd a)) == Σ.snd b -}
 -- THE THEOREM !!!!!!
 
 str-id-ppl : (X : cat) → (S : stdstr (cat.precat X)) → is-cat (pcatstr (cat.precat X) (stdstr.S S))
 str-id-ppl X S {fst , snd} {fst₁ , snd₁} f f-uck =
   Σ-stuff.decode (fst , snd) (fst₁ , snd₁) (Σ-stuff.Σ-eq-in (cat.iso-to-id X (Σ.fst f)
   (record { g = Σ.fst (iso.g f-uck) ; τ = ap (λ x → Σ.fst x) (iso.τ f-uck) ; ε = ap (λ x → Σ.fst x) (iso.ε f-uck) }))
-  (transport-lemma (cat.precat X) S fst fst₁ (cat.iso-to-id X (Σ.fst f)  (record { g = Σ.fst (iso.g f-uck) ; τ = ap (λ x → Σ.fst x) (iso.τ f-uck) ; ε = ap (λ x → Σ.fst x) (iso.ε f-uck) })) snd snd₁) )
+  (transport-lemma X S fst fst₁ (cat.iso-to-id X (Σ.fst f)  (record { g = Σ.fst (iso.g f-uck) ; τ = ap (λ x → Σ.fst x) (iso.τ f-uck) ; ε = ap (λ x → Σ.fst x) (iso.ε f-uck) })) snd snd₁ {!  !} {!  !} ))
+
+{-  str.H (stdstr.S S)
+      (Σ.fst
+       (id-to-iso (cat.precat X)
+        (cat.iso-to-id X (Σ.fst f)
+         (record
+          { g = Σ.fst (iso.g f-uck)
+          ; τ = ap Σ.fst (iso.τ f-uck)
+          ; ε = ap Σ.fst (iso.ε f-uck)
+          })))) -}
+
+record magma (A : Set) : Set where
+  field
+    _*_ : A → A → A
+
+record monoid (A : Set) : Set where
+  field
+    _*_ : A → A → A
+    m_unit : A
+    ur : (a : A) → (a == (a * m_unit))
+    ul : (a : A) → (a == (m_unit * a))
