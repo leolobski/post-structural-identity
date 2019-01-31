@@ -287,3 +287,10 @@ record monoid (A : Set) : Set where
     m_unit : A
     ur : (a : A) → (a == (a * m_unit))
     ul : (a : A) → (a == (m_unit * a))
+
+record group (A : Set) : Set where
+  field
+    _*_ : A → A → A
+    g_unit : A
+    ur : (a : A) → (a == (a * g_unit))
+    ul : (a : A) → (a == (g_unit * a))

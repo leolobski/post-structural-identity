@@ -1,0 +1,40 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+
+\mathchardef\mhyphen="2D %for a hyphen in the math mode
+
+\title{The Structure Identity Principle in Agda}
+\author{Leo Lobski, Francesco Mangraviti, Yo\` av Montacute}
+\date{1 February 2019}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+ The goal of this project is to formalize, using Agda, a result known as the {\em Structure identity principle} (Theorem 9.8.2 in \cite{hott-book}), concerning categories as defined in the context of homotopy type theory (HoTT from now on). To this end, we define a precategory, an isomorphism for a precategory, a notion of structure over a precategory, as well as prove some general results about these. This document should be read alongside the Agda file containing the formalizations, herein referred to as `the code'.
+  
+Informally, the structure identity principle expresses the idea that isomorphic structures are identical \cite[p.~327]{hott-book}. This can be thought of as expanding the notion of identity to be liberal enough to {\em include} the isomorphisms. The version of the structure identity principle we prove asserts that a certain canonical way to generate a precategory from a category and a standard notion of structure leads to a category.
+
+We begin the code by importing the libraries $\mathtt{PropositionsAsTypes}$ and $\mathtt{Equality}$ used in the class. We have also copied the definition of a dependent pair, as well the module $\mathtt{\Sigma \mhyphen stuff}$, as equalities between pairs are extensively used. Likewise, we have copied the functions $\mathtt{is-hprop}$ and $\mathtt{is-hset}$, as the definitions of a precategory and a notion of structure require the hom-sets of the former to be h-sets and propositions of the latter to be mere propositions.
+
+\section*{Definitions and results}
+In HoTT, a category ($\mathtt{cat}$) is defined to be a precategory ($\mathtt{pcat}$) for which the function $\mathtt{id \mhyphen to \mhyphen iso}$ is a quasi-inverse. A precategory consists of the same data as a non-HoTT category.
+
+The quasi inverse for a category is constructed explicitly in $\mathtt{iso \mhyphen to \mhyphen id}$. The proof that this function is equal to the inverse of $\mathtt{id \mhyphen to \mhyphen iso}$ follows from $\mathtt{iso \mhyphen to \mhyphen id \mhyphen hae}$.
+
+After defining the notion of structure ($\mathtt{str}$), we prove some results about the assignment of propositions ($\mathtt{H}$) in order to gain some intuition about structure homomorphisms.
+
+We then approach the structure identity principle by reducing the proof to a subgoal to be proved separately within $\mathtt{mainlemma}$. Completing the subgoal turned out to be more difficult than we anticipated.
+
+At the end of the code, we define two algebraic structures ($\mathtt{magma}$ and $\mathtt{monoid}$), to which we would have applied the structure identity principle had we had more time. We also take an alternative perspective on monoids by defining a precategory with one object and one morphism ($\mathtt{1cat}$). We then prove that it is in fact a category in $\mathtt{1cat \mhyphen is \mhyphen cat}$, as one should expect.
+
+\begin{thebibliography}{1}
+
+\bibitem{hott-book} {\em Homotopy Type Theory. Univalent Foundations of Mathematics}. The Univalent Foundations Program, 2013. \href{https://homotopytypetheory.org/book/}{https://homotopytypetheory.org/book/}
+
+\end{thebibliography}
+
+\end{document}
+ 
